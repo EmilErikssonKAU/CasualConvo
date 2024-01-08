@@ -45,7 +45,10 @@ class login_page():
         self.root.mainloop()
 
     def on_login_button_click(self, event):
-        pass
+        username = self.user_entry.get()
+        password = self.passw_entry.get()
+
+        
 
     def switch_to_create_account_click(self, event):
         #   Destroy this window

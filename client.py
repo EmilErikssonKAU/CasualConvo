@@ -6,7 +6,9 @@ from colorama import Fore, Style
 
 #   Functions and constants for message handling
 
-from messageModule import *
+sys.path.append('..')
+
+from mutual.messageModule import *
 
 #   Networking setup
 

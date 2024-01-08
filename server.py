@@ -5,7 +5,9 @@ import sys
 
 #   Functions and constants for message handling
 
-from messageModule import *
+sys.path.append('..')
+
+from mutual.messageModule import *
 
 
 #   Networking setup
@@ -21,7 +23,7 @@ server.listen()
 
 #   File containing login credentials
 
-import credentials as cred
+import secret.credentials as cred
 
 db = mysql.connector.connect(
     host=cred.host,
