@@ -1,7 +1,69 @@
 import tkinter as tk
+import socket
+import sys
+import threading
+import time
+from colorama import Fore, Style
+
+#   Functions and constants for message handling
+
+sys.path.append('..')
+
+from mutual.messageModule import *
+
+#   Networking setup
+
+SERVER_IP = "127.0.0.1"
+SERVER_PORT = 7823
+
+#   GUI
+
+#   Classes
+
+class client_entity:
+    def __init__ (self):
+        #   Server connection
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client.connect((SERVER_IP, SERVER_PORT))
+
+        #   Message buffer
+        self.message_buffer = []
+
+        #   Message reading thread
+        self.messageReader = threading.Thread(target=self.messageReading)
+        self.messageReader.daemon = True
+        self.messageReader.start()
+
+        #   GUI
+        self.gui = login_page(self)
+        
+
+    def messageReading(self):
+        while True:
+            message, flag = getMessage(self.client)
+
+            if flag:
+                print(f"Incoming message: {message}")
+            else:
+                self.message_buffer.append(message)
+        
+    def waitTilPop(self):
+        while True:
+            recieved = False
+            try:
+                message = self.message_buffer.pop(0)
+                recieved = True
+            except:
+                time.sleep(0.01)
+            if recieved:
+                return message
+
 
 class login_page():
-    def __init__(self):
+    def __init__(self, client_entity):
+        #   Back-end client
+        self.backend = client_entity
+
         #   Top-level tk widget
         self.root = tk.Tk()
 
@@ -47,7 +109,20 @@ class login_page():
     def on_login_button_click(self, event):
         username = self.user_entry.get()
         password = self.passw_entry.get()
+        
+        sendMessage(self.backend.client, "LOG_IN")
+        sendMessage(self.backend.client, username)
+        sendMessage(self.backend.client,password)
 
+        message = self.backend.waitTilPop()
+
+        if message == 'success':
+            #   This is where we start the GUI app
+            self.user_entry.configure(bg="green")
+            self.passw_entry.configure(bg="green")
+        else:
+            self.user_entry.configure(bg="red")
+            self.passw_entry.configure(bg="red")
         
 
     def switch_to_create_account_click(self, event):
@@ -55,15 +130,17 @@ class login_page():
         self.root.destroy()
 
         #   Create a create-account window
-        create_account_page()
+        create_account_page(self.backend)
 
 
 
 class create_account_page():
-    def __init__(self):
-        super().__init__()
+    def __init__(self, backend):
         #   Top-level tk widget
         self.root = tk.Tk()
+
+        #   Add backend
+        self.backend = backend
 
         #   root setup
         self.root.title("Cryptochat")
@@ -105,14 +182,32 @@ class create_account_page():
         self.root.mainloop()
 
     def on_create_account_button_click(self, event):
-        pass
+        username = self.user_entry.get()
+        password = self.passw_entry.get()
 
+        sendMessage(self.backend.client, "CREATE_ACCOUNT")
+        sendMessage(self.backend.client, username)
+        sendMessage(self.backend.client, password)
+
+        message = self.backend.waitTilPop()
+
+        if message == "account_created":
+            self.user_entry.configure(bg = "green")
+            self.passw_entry.configure(bg = "green")
+        
+        else:
+            self.user_entry.configure(bg = "red")
+            self.passw_entry.configure(bg = "red")
+
+    
     def switch_to_login_click(self, event):
         #   Destroy this window
         self.root.destroy()
 
         #   Create a login window
-        login_page()
+        login_page(self.backend)
 
+
+        
 if __name__ == '__main__':
-    login_page()
+    client_entity()

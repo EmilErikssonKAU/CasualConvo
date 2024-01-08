@@ -13,7 +13,7 @@ from mutual.messageModule import *
 #   Networking setup
 
 HOST = "127.0.0.1"
-PORT = 7828
+PORT = 7823
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
@@ -78,12 +78,12 @@ def connected(client):
 
 def createAccount(client):
 
-    username = getMessage(client)
-    password = getMessage(client)
+    username, flag = getMessage(client)
+    password, flag = getMessage(client)
 
     try:
         my_cursor.execute(f"INSERT INTO user_accounts VALUES('{username}', '{password}', False)")
-        sendMessage(client, "Account created!")
+        sendMessage(client, "account_created")
         db.commit()
 
     except Exception as e:
@@ -252,11 +252,12 @@ def viewClients(client):
 def quitChat(client):
     pass
 
+if __name__ == '__main__': 
 
-#   Start of program
-listening_thread = threading.Thread(target=recieve)
-listening_thread.daemon = True
-listening_thread.start()
+    #   Start of program
+    listening_thread = threading.Thread(target=recieve)
+    listening_thread.daemon = True
+    listening_thread.start()
 
-#   Allow user at server-end control
-controlThread()
+    #   Allow user at server-end control
+    controlThread()
