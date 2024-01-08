@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 from colorama import Fore, Style
+import app_gui as ap
 
 #   Functions and constants for message handling
 
@@ -118,8 +119,10 @@ class login_page():
 
         if message == 'success':
             #   This is where we start the GUI app
-            self.user_entry.configure(bg="green")
-            self.passw_entry.configure(bg="green")
+            self.root.destroy()
+            self.backend.username = username
+            ap.mainApp(self.backend)
+
         else:
             self.user_entry.configure(bg="red")
             self.passw_entry.configure(bg="red")
