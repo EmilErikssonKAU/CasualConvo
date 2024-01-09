@@ -21,10 +21,14 @@ class mainApp(tk.Tk):
         self.listbox = tk.Listbox(self.lb_frame)
         self.listbox.pack(side=tk.LEFT, fill=tk.Y)
 
+        #   Listbox functio-binding
+        self.listbox.bind("<<ListboxSelect>>", self.on_select)
+
         #   Scrollbar
         self.lb_scroll = tk.Scrollbar(self.lb_frame, command=self.listbox.yview)
         self.lb_scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.listbox.config(yscrollcommand=self.lb_scroll.set)
+        
 
         #   Top-right label
         self.label_top_right = tk.Label(self, text=f"Logged in as {self.backend.username}")
@@ -69,32 +73,34 @@ class mainApp(tk.Tk):
         #   Send request to server
         sendMessage(self.backend.client, "VIEW_USERS")
 
-        #   Store the online/offline data in dictionary
-        self.backend.users = {}
-
         #   Get number of online users
         online_range = int(self.backend.waitTilPop())
 
         for i in range(online_range):
             user = self.backend.waitTilPop()
-            print(user)
-            self.backend.users[user] = "online"
+            user_dict = {}
+            self.backend.users[user] = user_dict
+            self.backend.users[user]["status"] = "online"
 
+        print("Efter loop 1")
         #   Get number of offline users
         offline_range = int(self.backend.waitTilPop())
 
         for i in range(offline_range):
             user = self.backend.waitTilPop()
-            print(user)
-            self.backend.users[user] = "offline"
+            user_dict = {}
+            self.backend.users[user] = user_dict
+            self.backend.users[user]["status"] = "offline"
+
+        print("Efter loop2")
 
         #   Need entry count for itemconfig
         lap = 0
 
         for key in sorted(self.backend.users):
-            if(self.backend.users[key] == "online"):
+            if(self.backend.users[key]["status"] == "online"):
                 color = "green"
-            if(self.backend.users[key] == "offline"):
+            if(self.backend.users[key]["status"] == "offline"):
                 color = "red"
 
             #   Add name to listbox
@@ -102,6 +108,12 @@ class mainApp(tk.Tk):
             self.listbox.itemconfig(lap, {'bg': color})
             lap += 1
 
+    def on_select(self, event):
+        #   Get the selected username
+        selected_item = self.listbox.get(self.listbox.curselection())
+
+        print(selected_item)
+        
 
 
 

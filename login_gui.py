@@ -15,7 +15,7 @@ from mutual.messageModule import *
 #   Networking setup
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 7823
+SERVER_PORT = 7822
 
 #   GUI
 
@@ -29,6 +29,13 @@ class client_entity:
 
         #   Message buffer
         self.message_buffer = []
+
+        #   Record of user information
+        self.users = {}
+
+        #   username : { status: 
+        #                conversation:            
+        #              }
 
         #   Message reading thread
         self.messageReader = threading.Thread(target=self.messageReading)
