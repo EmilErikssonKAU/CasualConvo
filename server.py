@@ -9,14 +9,8 @@ sys.path.append('..')
 
 from mutual.messageModule import *
 
-
-#   Networking setup
-
-HOST = "127.0.0.1"
-PORT = 7822
-
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST, PORT))
+server.bind((SERVER_IP, SERVER_PORT))
 server.listen()
 
 #   SQL setup
@@ -35,106 +29,132 @@ db = mysql.connector.connect(
 
 my_cursor = db.cursor()
 
-#   Lists of resources
 
-clients = []
+#   Main data-structure
+#   online_users{
+#       client_id : {   socket : ...
+#                       username : ... }
+#   }
 
-#   Mapping of usernames to sockets
-#   'username' : socket
+#   Temporary data-structure where we bind usernames to client id's
+#   users = {username : user_id}
 
 online_users = {}
+
+users = {}
 
 #   Functions
 
 def recieve():
+    #   identifier for client
+    client_id = 0
+
     while True:
-        client, address = server.accept()
-        clients.append(client)
+        socket, address = server.accept()
         print("NEW CLIENT CONNECTED!")
 
-        client_thread = threading.Thread(target=connected, args=(client,))
+        #   Creating entry in main data-structure
+
+        online_users[client_id] = {"socket" : socket}
+
+        client_thread = threading.Thread(target=connected, args=(client_id,))
         client_thread.daemon = True
         client_thread.start()
 
+        client_id += 1
 
-def connected(client):
+
+def connected(client_id):
     while True:
         create = "CREATE_ACCOUNT"
         login = "LOG_IN"
         quit = "QUIT"
         
-        message, flag = getMessage(client)
+        message, flag = getMessage(online_users[client_id]["socket"])
 
         if message == create:
-            createAccount(client)
+            createAccount(client_id)
         elif message == login:
-            logIn(client)
+            logIn(client_id)
         elif message == quit:
-            clients.remove[client]
             sys.exit(0)
 
         #   Input control exists at client-side
 
 
-def createAccount(client):
+def createAccount(client_id):
 
-    username, flag = getMessage(client)
-    password, flag = getMessage(client)
+    username, flag = getMessage(online_users[client_id]["socket"])
+    password, flag = getMessage(online_users[client_id]["socket"])
 
     try:
         my_cursor.execute(f"INSERT INTO user_accounts VALUES('{username}', '{password}', False)")
-        sendMessage(client, "account_created")
+        sendMessage(online_users[client_id]["socket"], "account_created")
         db.commit()
 
     except Exception as e:
-        sendMessage(client, str(e))
+        sendMessage(online_users[client_id]["socket"], str(e))
 
 
 
-def logIn(client):
-    username, flag = getMessage(client)
-    password, flag = getMessage(client)
+def logIn(client_id):
+    username, flag = getMessage(online_users[client_id]["socket"])
+    password, flag = getMessage(online_users[client_id]["socket"])
+
+    print(username)
+    print(password)
 
     try: 
         my_cursor.execute(f"SELECT username, passw FROM user_accounts WHERE username='{username}'")
+        print("TRY SUCCESS")
 
     except Exception as e:
         #   If username is not in database 
-        sendMessage(client, str(e))
+        sendMessage(online_users[client_id]["socket"], str(e))
+        print("IN EXCEPTION")
         return
 
     results = my_cursor.fetchall()
 
     if not results:
-        failedLogin(client)
+        failedLogin(client_id)
 
     else:
         db_username = results[0][0]
         db_password = results[0][1]
 
         if username == db_username and password == db_password:
-            loggedIn(client, username)
+            #   Bind username to a client_id
+            online_users[client_id]["username"] = username
+            users[username] = client_id
+
+            print(username)
+            print(online_users[client_id]["username"])
+            if(online_users[client_id]["username"] == username):
+                print("True")
+            else:
+                print("False")
+
+            loggedIn(client_id)
+
         elif username == db_username and not password == db_password:
-            failedLogin(client)
+            failedLogin(client_id)
     
 
-def failedLogin(client):
+def failedLogin(client_id):
     #   Send message to client
 
-    sendMessage(client, "fail")
+    sendMessage(online_users[client_id]["socket"], "fail")
 
 
 
-def loggedIn(client, username):
+def loggedIn(client_id):
     print("Client successfully logged in")
+
     #   Send message to client
+    sendMessage(online_users[client_id]["socket"], "success")
 
-    sendMessage(client, "success")
-
-    #   Add username:socket to online_users
-
-    online_users[username] = client
-    chatApp(client, username)
+    chatApp(client_id)
 
 
 def controlThread():
@@ -147,41 +167,39 @@ def controlThread():
             
 def cleanUp():
 
-    try:
-        for client in clients:
-                client.close()
-    except:
-        #   Will result in unclosed client sockets, unsure if a problem
-        pass
-
     server.close()
     sys.exit(0)
 
 
 #   Chat application
     
-def chatApp(client, username):
+def chatApp(client_id):
     #   Update online status for user
-    my_cursor.execute(f"UPDATE user_accounts SET online=True WHERE username='{username}'")
+    print(online_users[client_id]['username'])
+
+    #   This line occasionally produces problems, I'm assuming this issue comes from previous instances of program
+    #   not closing resources correctly and still accessing database
+
+    my_cursor.execute(f"UPDATE user_accounts SET online=True WHERE username='{online_users[client_id]['username']}'")
 
     while True:
         send = "SEND_MESSAGE"
         search = "VIEW_USERS"
         quit = "QUIT"
-        message, flag = getMessage(client)
+        message, sender = getMessage(online_users[client_id]["socket"])
         
         if message == send:
-            sendMessageClient(client)
+            sendMessageClient(client_id)
         elif message == search:
-            viewClients(client)
+            viewClients(client_id)
         elif message == quit:
-            quitChat(client)
+            quitChat(client_id)
 
-def sendMessageClient(client):
+def sendMessageClient(client_id):
     #   Recieve message + recipient
 
-    message, flag = getMessage(client)
-    recipient, flag = getMessage(client)
+    message, sender = getMessage(online_users[client_id]["socket"])
+    recipient, sender = getMessage(online_users[client_id]["socket"])
 
     #   Check if recipient is online
 
@@ -190,14 +208,18 @@ def sendMessageClient(client):
 
     if results:
         #   Recipient exists and is online, flag: 1
-        username = results[0][0]
-        recievingClient = online_users[username]
 
-        #   Send message
-        sendMessage(recievingClient, message, True)
+        #   Method to extract socket of recipient
+        username_rec = results[0][0]
+        recieving_id = users[username_rec]
+        recievingClient = online_users[recieving_id]["socket"]
+
+
+        #   Send message with sender information
+        sendMessage(recievingClient, message, online_users[client_id]["username"])
 
         #   Return status
-        sendMessage(client, str(1))
+        sendMessage(online_users[client_id]["socket"], str(1))
 
     else:
         #   Check if recipient exists
@@ -207,15 +229,15 @@ def sendMessageClient(client):
         if results:
             #   Recipient exists but is not online, flag: 2
             #   Return status
-            sendMessage(client, str(2))
+            sendMessage(online_users[client_id]["socket"], str(2))
         else:
             #   Recipient does not exist, flag: 3
             #   Return status
-            sendMessage(client, str(3))
+            sendMessage(online_users[client_id]["socket"], str(3))
 
 
 
-def viewClients(client):
+def viewClients(client_id):
     my_cursor.execute("SELECT username FROM user_accounts WHERE online=True")
     results = my_cursor.fetchall()
     entry_count = 0
@@ -227,12 +249,12 @@ def viewClients(client):
 
     #   send the count
         
-    sendMessage(client, str(entry_count))
+    sendMessage(online_users[client_id]["socket"], str(entry_count))
 
     #   send the online users
 
     for entry in results:
-        sendMessage(client, entry[0])
+        sendMessage(online_users[client_id]["socket"], entry[0])
 
     #   corresponding operations for offline users
 
@@ -243,10 +265,10 @@ def viewClients(client):
     for result in results:
         entry_count += 1
         
-    sendMessage(client, str(entry_count))
+    sendMessage(online_users[client_id]["socket"], str(entry_count))
 
     for entry in results:
-        sendMessage(client, entry[0])
+        sendMessage(online_users[client_id]["socket"], entry[0])
 
 
 def quitChat(client):

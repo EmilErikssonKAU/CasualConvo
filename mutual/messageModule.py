@@ -1,14 +1,19 @@
 import struct
 
+#   Networking setup
+
+SERVER_IP = "127.0.0.1"
+SERVER_PORT = 7856
+
 #   Header length (bytes)
 
-HEADER_LENGTH = 5
 HEADER_MESSAGE_LENGTH = 4
-CLIENT_TO_CLIENT_FLAG = 1
+HEADER_SENDER_LENGTH = 10
+HEADER_LENGTH = HEADER_SENDER_LENGTH + HEADER_MESSAGE_LENGTH
 
 #   Header contents:
 #       Message length          -> 4 bytes
-#       Client to client flag   -> 1 byte
+#       Sender                  -> 10 bytes
 
 
 #   Message handling
@@ -18,22 +23,19 @@ def getMessage(client):
     header = client.recv(HEADER_LENGTH)
 
     #   Extract message length and flag
-    message_length_bytes, client_to_client_flag = struct.unpack('I?', header)
+    message_length_bytes, sender = struct.unpack(f'I{HEADER_SENDER_LENGTH}s', header)
+
+    sender_decoded = sender.rstrip(b'\x00').decode('ascii')
 
     #   Get message
     message = client.recv(message_length_bytes).decode('ascii')
 
-    #   Flag = True :: Message from client
-    #   Flag = false :: Message from server
+    return message, sender_decoded
 
-    if client_to_client_flag:
-        return message, True
-    else:
-        return message, False
-
-def sendMessage(client, message, clientToClient = False):
+def sendMessage(client, message, sender = "NULL"):
     #   Build header
-    header = struct.pack('I?', len(message), clientToClient)
+    
+    header = struct.pack(f'I{HEADER_SENDER_LENGTH}s', len(message), sender.encode('ascii'))
 
     #   Send header
     client.send(header)

@@ -12,10 +12,6 @@ sys.path.append('..')
 
 from mutual.messageModule import *
 
-#   Networking setup
-
-SERVER_IP = "127.0.0.1"
-SERVER_PORT = 7822
 
 #   GUI
 
@@ -48,12 +44,22 @@ class client_entity:
 
     def messageReading(self):
         while True:
-            message, flag = getMessage(self.client)
+            message, sender = getMessage(self.client)
 
-            if flag:
-                print(f"Incoming message: {message}")
-            else:
+            if sender == "NULL":
+                print("In if")
                 self.message_buffer.append(message)
+            else:
+                print("In else")
+                #   Send notification
+                try:    
+                    self.gui.notification_board.config(text=f"Message from {sender}!")
+                except:
+                    #   Unknown but very possible, user shouldnt be on login_page
+                    pass
+                #   Add message to conversation history
+                pass
+                
         
     def waitTilPop(self):
         while True:
@@ -122,15 +128,19 @@ class login_page():
         sendMessage(self.backend.client, username)
         sendMessage(self.backend.client,password)
 
-        message = self.backend.waitTilPop()
+        message = self.backend.waitTilPop()             #   Here the program freezes
+
+        print(message)
 
         if message == 'success':
             #   This is where we start the GUI app
             self.root.destroy()
             self.backend.username = username
+            print("After self.backend.username")
             ap.mainApp(self.backend)
 
         else:
+            print("in else")
             self.user_entry.configure(bg="red")
             self.passw_entry.configure(bg="red")
         
