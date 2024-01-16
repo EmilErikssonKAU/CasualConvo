@@ -44,21 +44,31 @@ class client_entity:
 
     def messageReading(self):
         while True:
+            time.sleep(0.5)
             message, sender = getMessage(self.client)
 
             if sender == "NULL":
-                print("In if")
                 self.message_buffer.append(message)
+                
             else:
-                print("In else")
-                #   Send notification
-                try:    
-                    self.gui.notification_board.config(text=f"Message from {sender}!")
-                except:
-                    #   Unknown but very possible, user shouldnt be on login_page
-                    pass
-                #   Add message to conversation history
-                pass
+                #   Notify recieving user
+                self.gui.notification_board.config(text=f"Message from {sender}!")
+
+                #   Add conversation to message history
+                if "conversation" not in self.users[sender]:
+                    self.users[sender]["conversation"] = " "
+
+                self.users[sender]["conversation"] += f"{sender}: {message}"
+
+                print(f"CURRENT CONVO: {self.users[sender]['conversation']}")
+
+                if "conversation" in self.users[sender]:
+                    print("Conversation in self.users[sender]")
+                else:
+                    print("NOPE")
+
+                
+
                 
         
     def waitTilPop(self):
@@ -130,17 +140,17 @@ class login_page():
 
         message = self.backend.waitTilPop()             #   Here the program freezes
 
-        print(message)
+        
 
         if message == 'success':
             #   This is where we start the GUI app
             self.root.destroy()
             self.backend.username = username
-            print("After self.backend.username")
+            
             ap.mainApp(self.backend)
 
         else:
-            print("in else")
+            
             self.user_entry.configure(bg="red")
             self.passw_entry.configure(bg="red")
         

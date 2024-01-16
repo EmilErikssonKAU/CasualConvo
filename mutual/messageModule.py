@@ -3,7 +3,7 @@ import struct
 #   Networking setup
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 7856
+SERVER_PORT = 7829
 
 #   Header length (bytes)
 
@@ -29,6 +29,8 @@ def getMessage(client):
 
     #   Get message
     message = client.recv(message_length_bytes).decode('ascii')
+    
+    
 
     return message, sender_decoded
 
@@ -42,4 +44,7 @@ def sendMessage(client, message, sender = "NULL"):
     
     #   Send message
     client.send(message.encode('ascii'))
+
+    
+    
 

@@ -12,6 +12,12 @@ class mainApp(tk.Tk):
         #   Client configuration
         self.backend = backend
 
+        #   Assign backends gui component
+        self.backend.gui = self
+
+        #   Current target for conversation
+        self.convo_target = 0
+
         #   Window settings
         self.title("Cryptochat client")
 
@@ -34,7 +40,8 @@ class mainApp(tk.Tk):
         #   Top-right label
         self.label_top_right = tk.Label(self, text=f"Logged in as {self.backend.username}")
         
-        #   Top-left searchbar
+        #   Top-left label
+        self.label_top_right = tk.Label(self, text=f"Talking with ?")
 
         #   Text window without input
         self.text_window = tk.Text(self, width=30, height=10, state=tk.DISABLED)
@@ -62,16 +69,55 @@ class mainApp(tk.Tk):
         self.th_scrollbar.daemon = True
         self.th_scrollbar.start()
 
+        #   Update contents of text window
+        self.th_textwin = threading.Thread(target=self.updateTextWindow)
+        self.th_textwin.daemon = True
+        self.th_textwin.start()
+
         #   Run the main-loop
         self.mainloop()
 
     def send_btn_clicked(self, event):
-        pass
+        #   Get message from input window
+        message_to_send = self.input_text.get("1.0",tk.END)
+
+        #   Clear the input window
+        self.input_text.delete("1.0", tk.END)
+
+        #   Send the message-request to the server
+        sendMessage(self.backend.client, "SEND_MESSAGE")
+
+        #   Send the message and recipient
+        sendMessage(self.backend.client, message_to_send)
+        sendMessage(self.backend.client, self.convo_target)
+        
+    def updateTextWindow(self): 
+        while True:
+            #   User has selected another user
+            time.sleep(0.3)
+            print(f"target: {self.convo_target}")
+            if self.convo_target == "Emil":
+                print("TRUE")
+            else:
+                print("FALSE")
+            
+            if self.convo_target == 0:
+                continue
+
+            if "conversation" in self.backend.users[self.convo_target]:
+                print("IN UPDATE WINDOW IF")
+                #   Clear previous text
+                self.text_window.delete(1.0, "end")
+
+                #   Add new text
+                self.text_window.insert("end", self.backend.users[self.convo_target]["conversation"])
+
+
 
     def updateScrollbar(self):
         while True:
             #   Sleep for a second
-            time.sleep(0.5)
+            time.sleep(1)
 
             #   Send request to server
             sendMessage(self.backend.client, "VIEW_USERS")
@@ -112,8 +158,10 @@ class mainApp(tk.Tk):
     def on_select(self, event):
         #   Get the selected username
         selected_item = self.listbox.get(self.listbox.curselection())
+        self.label_top_right.config(text=f"Conversation with {selected_item}")
 
-        print(selected_item)
+        #   Current target for conversation
+        self.convo_target = selected_item
         
 
 
