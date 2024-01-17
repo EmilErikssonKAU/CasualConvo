@@ -10,6 +10,6 @@ As of now, no non-local server is running the application. To run the server you
 
 ```USE login_info;```
 
-```CREATE TABLE IF NOT EXISTS user_accounts (username VARCHAR(255) PRIMARY KEY,password VARCHAR(255),status BOOLEAN);```
+```CREATE TABLE user_accounts (username VARCHAR(255) PRIMARY KEY,password VARCHAR(255),status BOOLEAN);```
 
-
+To run the server, you run the file server.py, to run the client you run the file login_gui.py
