@@ -3,7 +3,7 @@ import struct
 #   Networking setup
 
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 7835
+SERVER_PORT = 7831
 
 #   Header length (bytes)
 

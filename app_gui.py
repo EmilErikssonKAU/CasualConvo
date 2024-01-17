@@ -44,7 +44,7 @@ class mainApp(tk.Tk):
         self.label_top_right = tk.Label(self, text=f"Talking with ?")
 
         #   Text window without input
-        self.text_window = tk.Text(self, width=30, height=10, state=tk.DISABLED)
+        self.text_window = tk.Text(self, width=30, height=10)
 
         #   Smaller text window for input
         self.input_text = tk.Text(self, width=30, height=3)
@@ -74,6 +74,9 @@ class mainApp(tk.Tk):
         self.th_textwin.daemon = True
         self.th_textwin.start()
 
+        #   Welcome message
+        self.text_window.insert("end", "See conversations here!")
+
         #   Run the main-loop
         self.mainloop()
 
@@ -94,19 +97,20 @@ class mainApp(tk.Tk):
     def updateTextWindow(self): 
         while True:
             #   User has selected another user
-            time.sleep(0.2)
+            time.sleep(0.5)
             
             if self.convo_target == 0:
                 continue
 
-            try:
-                #   Clear previous text
-                self.text_window.delete(1.0, "end")
+            #   Clear previous text
+            self.text_window.delete(1.0, "end")
 
+            try:
                 #   Add new text
                 self.text_window.insert("end", self.backend.users[self.convo_target]["conversation"])
+                #print(self.backend.users[self.convo_target]["conversation"])
             except:
-                pass
+                print(f"ERROR DISPLAYING MESSAGE FROM {self.convo_target}")
 
 
 
@@ -126,8 +130,12 @@ class mainApp(tk.Tk):
             for i in range(online_range):
                 user = self.backend.waitTilPop()
                 print(user)
-                user_dict = {}
-                self.backend.users[user] = user_dict
+
+                if user not in self.backend.users:
+                    print("user not in self.backend.users:(online)")
+                    user_dict = {}
+                    self.backend.users[user] = user_dict
+
                 self.backend.users[user]["status"] = "online"
 
             #   Get number of offline users
@@ -137,8 +145,12 @@ class mainApp(tk.Tk):
             for i in range(offline_range):
                 user = self.backend.waitTilPop()
                 print(user)
-                user_dict = {}
-                self.backend.users[user] = user_dict
+
+                if user not in self.backend.users:
+                    print("user not in self.backend.users:(offline)")
+                    user_dict = {}
+                    self.backend.users[user] = user_dict
+
                 self.backend.users[user]["status"] = "offline"
 
             #   Need entry count for itemconfig

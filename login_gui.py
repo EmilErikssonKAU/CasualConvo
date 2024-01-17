@@ -66,10 +66,7 @@ class client_entity:
                     print("Conversation in self.users[sender]")
                 else:
                     print("NOPE")
-
-                
-
-                
+                    
         
     def waitTilPop(self):
         while True:
