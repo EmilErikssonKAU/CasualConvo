@@ -218,8 +218,8 @@ def sendMessageClient(client_id):
         #   Send message with sender information
         sendMessage(recievingClient, message, online_users[client_id]["username"])
 
-        #   Return status
-        sendMessage(online_users[client_id]["socket"], str(1))
+        # #   Return status
+        # sendMessage(online_users[client_id]["socket"], str(1))
 
     else:
         #   Check if recipient exists
@@ -248,12 +248,13 @@ def viewClients(client_id):
         entry_count += 1
 
     #   send the count
-        
+    print(entry_count)
     sendMessage(online_users[client_id]["socket"], str(entry_count))
 
     #   send the online users
 
     for entry in results:
+        print(entry[0])
         sendMessage(online_users[client_id]["socket"], entry[0])
 
     #   corresponding operations for offline users
@@ -265,9 +266,11 @@ def viewClients(client_id):
     for result in results:
         entry_count += 1
         
+    print(entry_count)
     sendMessage(online_users[client_id]["socket"], str(entry_count))
 
     for entry in results:
+        print(entry[0])
         sendMessage(online_users[client_id]["socket"], entry[0])
 
 

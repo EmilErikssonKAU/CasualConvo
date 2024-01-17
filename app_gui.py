@@ -94,23 +94,19 @@ class mainApp(tk.Tk):
     def updateTextWindow(self): 
         while True:
             #   User has selected another user
-            time.sleep(0.3)
-            print(f"target: {self.convo_target}")
-            if self.convo_target == "Emil":
-                print("TRUE")
-            else:
-                print("FALSE")
+            time.sleep(0.2)
             
             if self.convo_target == 0:
                 continue
 
-            if "conversation" in self.backend.users[self.convo_target]:
-                print("IN UPDATE WINDOW IF")
+            try:
                 #   Clear previous text
                 self.text_window.delete(1.0, "end")
 
                 #   Add new text
                 self.text_window.insert("end", self.backend.users[self.convo_target]["conversation"])
+            except:
+                pass
 
 
 
@@ -125,17 +121,22 @@ class mainApp(tk.Tk):
             #   Get number of online users
             online_range = int(self.backend.waitTilPop())
 
+            print(online_range)
+
             for i in range(online_range):
                 user = self.backend.waitTilPop()
+                print(user)
                 user_dict = {}
                 self.backend.users[user] = user_dict
                 self.backend.users[user]["status"] = "online"
 
             #   Get number of offline users
             offline_range = int(self.backend.waitTilPop())
+            print(offline_range)
 
             for i in range(offline_range):
                 user = self.backend.waitTilPop()
+                print(user)
                 user_dict = {}
                 self.backend.users[user] = user_dict
                 self.backend.users[user]["status"] = "offline"
