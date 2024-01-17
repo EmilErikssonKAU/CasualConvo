@@ -6,11 +6,11 @@ CasualConvo is a basic client-server chat application, where registered users ar
 
 As of now, no non-local server is running the application. To run the server yourself locally you must first initialise a mySQL database and adapt the mysql.connector.connect.cursor.execute() statements to match your database. I recommend the following setup:
 
-´CREATE DATABASE login_info;´
-´USE login_info;´
-´CREATE TABLE IF NOT EXISTS user_accounts (
+´´´CREATE DATABASE login_info;´´´
+´´´USE login_info;´´´
+´´´CREATE TABLE IF NOT EXISTS user_accounts (
     username VARCHAR(255) PRIMARY KEY,
     password VARCHAR(255),
     status BOOLEAN
-);´
+);´´´
 
